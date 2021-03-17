@@ -1,0 +1,5 @@
+[mysql]
+User = "root"
+Password = "yingyujie123"
+Addr = "tcp(127.0.0.1:3306)"
+DBname = "talent_recruitment_system"
