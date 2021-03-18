@@ -14,5 +14,5 @@ type Service struct {
 func (s *Service) init() {
     s.initConfig()
     s.initDB()
-
+    s.initRouter()
 }
