@@ -4,6 +4,7 @@ import (
     "fmt"
     "gorm.io/driver/mysql"
     "gorm.io/gorm"
+    "gorm.io/gorm/schema"
 )
 
 func (s *Service) initDB()  {
@@ -16,7 +17,7 @@ func (s *Service) initDB()  {
         dbConf.DBname,
     )
     fmt.Println(dsn)
-    db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+    db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{NamingStrategy: schema.NamingStrategy{SingularTable: true}})
     if err!=nil{
         panic("连接数据库出错")
     }

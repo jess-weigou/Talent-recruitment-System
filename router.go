@@ -6,7 +6,7 @@ func (s Service)initRouter()  {
     r:=gin.Default()
     //注册登陆模块
     r.GET("/login",s.Login)
-    //r.POST("/register")
+    r.POST("/register",s.Register)
     //selfInfo:=r.Group("/selfInfo")
     //{
     //    selfInfo.POST("/add")

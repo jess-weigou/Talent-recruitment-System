@@ -1,10 +1,9 @@
 package main
 
-type Input struct {
-    Id int
+type AccountTable struct {
     AccountPhone string    `json:"account_phone"`
-    PassWord string     `json:"password"`
-    DingDingAccount string `json:"dingding_account"`
+    DingdingAccount string `json:"dingding_account"`
+    Password string     `json:"password"`
 }
 type StaffInterface struct{
     Id int
