@@ -1,6 +1,7 @@
 package main
 
 type AccountTable struct {
+    Uuid string `json:"uuid"`
     AccountPhone string    `json:"account_phone"`
     DingdingAccount string `json:"dingding_account"`
     Password string     `json:"password"`
@@ -15,12 +16,12 @@ type CompanyInterface struct {
     CompanyId string
     CompanyName string
 }
-type SelfDetail struct {
-    StaffPhone string `json:"staff_phone"`
+type SelfDetails struct {
+    StaffPhone2 string `json:"staff_phone"`
     StaffName string   `json:"staff_name"`
     StaffIdentityCard string `json:"staff_identity_card"`
     StaffPhoto string `json:"staff_photo"`
-    StaffSex bool `json:"staff_sex"`
+    StaffSexuality bool `json:"staff_sex"`
     StaffMarry bool `json:"staff_marry"`
     StaffCertification string `json:"staff_certification"`
     StaffCharacter string `json:"staff_character"`

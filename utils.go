@@ -1,25 +1,30 @@
 package main
 
+type Data struct {
+    Token string `json:"token"`
+}
 type SuccessReturn struct {
+    Status bool `json:"status"`
     Msg   string      `json:"msg"`
-    Data  interface{} `json:"data"`
-    Error int         `json:"error"`
+    TokenData  Data   `json:"data"`
 }
 type ErrorReturn struct {
+    Status bool    `json:"status"`
     Msg   string      `json:"msg"`
-    Error int         `json:"error"`
+    TokenData  Data   `json:"data"`
 }
 
-func MakeSuccessReturn(data interface{})(int ,interface{})  {
+func MakeSuccessReturn(data string)(int ,interface{})  {
     return 200,SuccessReturn{
+        Status: true,
         Msg: "success",
-        Data: data,
-        Error: 0,
+        TokenData: Data{Token: data},
     }
 }
-func MakeErrorReturn(status int,code int ,msg string)(int ,interface{})  {
-    return status,ErrorReturn{
+func MakeErrorReturn(msg string)(int ,interface{})  {
+    return 200,ErrorReturn{
+        Status: false,
         Msg: msg,
-        Error: code,
+        TokenData: Data{Token: ""},
     }
 }
