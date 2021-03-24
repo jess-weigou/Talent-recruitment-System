@@ -30,7 +30,7 @@ type SelfDetails struct {
 }
 type EmploymentStatus struct {
     FileId int `json:"file_id"`
-    StaffPhone string `json:"staff_phone"`
+    StaffPhone1 string `json:"staff_phone"`
     CompanyId string `json:"company_id"`
     DeptId string `json:"dept_id"`
     StaffId string `json:"staff_id"`

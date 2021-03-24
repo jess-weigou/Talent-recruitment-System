@@ -7,10 +7,10 @@ func (s Service)initRouter()  {
     //注册登陆模块
     r.GET("/login",s.Login)
     r.POST("/register",s.Register)
-    selfInfo:=r.Group("/selfInfo")
+    selfInfo:=r.Group("/profiles/:phone")
     {
-       selfInfo.POST("/add",s.AddSelfDetail)
-       selfInfo.GET("/see")
+       selfInfo.GET("/",s.GetSelfDetail)
+       selfInfo.PUT("/",s.ModifySelfDetail)
     }
     s.Router=r
     r.Run(":8080")
