@@ -33,13 +33,13 @@ func MakeErrorReturn(msg string)(int ,interface{})  {
         TokenData: Data{Token: ""},
     }
 }
-func (s Service)DatabaseCommit(data interface{},c *gin.Context)  {
+func (s Service)DatabaseCommit(data interface{},c *gin.Context,msg string)  {
     tx:=s.DB.Begin()
     {
-        if s.DB.Create(&data).RowsAffected!=1{
-            fmt.Println("数据库错误")
+        if s.DB.Create(data).RowsAffected!=1{
+            fmt.Println(msg)
             tx.Rollback()
-            c.JSON(MakeErrorReturn("database fail"))
+            c.JSON(MakeErrorReturn(msg))
             return
         }
         tx.Commit()

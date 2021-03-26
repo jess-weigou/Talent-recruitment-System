@@ -4,6 +4,7 @@ import (
     "fmt"
     "github.com/gin-gonic/gin"
     "github.com/go-basic/uuid"
+    "reflect"
 )
 //登陆验证
 func (s *Service) Login (c *gin.Context)  {
@@ -12,11 +13,11 @@ func (s *Service) Login (c *gin.Context)  {
     if err!=nil{
         c.JSON(MakeErrorReturn("can not bind json"))
     }
-    fmt.Println("账号密码； ",input)
-    s.DB.Where("account_phone=?","password=?",input.AccountPhone,input.Password).Find(&input)
-    if input.DingdingAccount == ""{
-        fmt.Println("没有这个人")
-        c.JSON(MakeErrorReturn("can not find this username"))
+    fmt.Println("账号密码； ",input.AccountPhone,input.Password)
+    s.DB.Debug().Select("position").Where("account_phone=? AND password=?",input.AccountPhone,input.Password).Find(&input)
+    if input.Position == ""{
+        fmt.Println("账号或者密码错误")
+        c.JSON(MakeErrorReturn("username or password wrong"))
         return
     }
     //get uuid and insert to mysql
@@ -39,58 +40,48 @@ func (s Service) Register( c *gin.Context)  {
         c.JSON(MakeErrorReturn("invalid data"))
         return
     }
-        tx:=s.DB.Begin()
-        {
+    s.DB.Select("password").Where("account_phone=?",register.AccountPhone).Find(&register)
+    if register.Position!=""{
+        c.JSON(MakeErrorReturn("用户已注册"))
+        return
+    }
+    //注册插入各表电话信息
             s.DatabaseCommit(&AccountTable {
                 AccountPhone: register.AccountPhone,
                 Password: register.Password,
                 DingdingAccount: register.DingdingAccount,
-            },c)
-           if s.DB.Create().RowsAffected!=1{
-               fmt.Println("数据库错误",err)
-               tx.Rollback()
-               c.JSON(MakeErrorReturn("register fail"))
-               return
-           }else{
-               s.DB.Create(&EmploymentStatus{
-                   StaffPhone1: register.AccountPhone,
-               })
-               s.DB.Create(SelfDetails{
-                   StaffPhone2:register.AccountPhone,
-               })
-               s.DB.Create(StaffInterface{
-                   StaffPhone:register.AccountPhone,
-               })
-           }
-           tx.Commit()
-
+                Position: "1",  //注册默认为员工
+            },c,"register fail")
+            s.DatabaseCommit(&StaffInterface{
+                StaffPhone:register.AccountPhone,
+            },c,"register fail_StaffInterface")
+            //s.DatabaseCommit(&SelfDetails{
+            //    StaffPhone2:register.AccountPhone,
+            //},c,"register fail_SelfDetails")
             uuid:=uuid.New()
             s.DB.Where("account_phone=?",register.AccountPhone).Updates(&AccountTable{
                 Uuid: uuid,
             })
            c.JSON(MakeSuccessReturn(uuid))
-        }
 }
 //修改个人信息
 func (s Service)ModifySelfDetail (c *gin.Context) {
-    selfInformation := new(SelfDetails)
+    selfInformation:=new(SelfDetails)
     err := c.ShouldBind(selfInformation)
     if err != nil {
-        MakeErrorReturn("can not bind json")
-        return
+       MakeErrorReturn("can not bind")
+       return
     }
+    var typeInfo = reflect.TypeOf(*selfInformation)
+    var valInfo = reflect.ValueOf(*selfInformation)
     phone:=c.Param("phone")
-
-    tx := s.DB.Begin()
-    {
-        if result := s.DB.Create(&selfInformation); result.Error != nil || result.RowsAffected >= 3 {
-            fmt.Println(result.Error,"数据库错误")
-            tx.Rollback()
-            c.JSON(MakeErrorReturn("add self_detail fail"))
-            return
+    num := typeInfo.NumField()
+    for i:=0;i<num;i++{
+        if valInfo.Field(i).String()+""!=""{
+            s.DB.Where("staff_phone2=?",phone).Updates(SelfDetails{
+                typeInfo.Field(i).Name:valInfo.Field(i).FieldByName(typeInfo.Field(i).Name),
+            })
         }
-        tx.Commit()
-        c.JSON(MakeSuccessReturn(""))
     }
 }
 //查看个人信息

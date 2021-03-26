@@ -1,15 +1,18 @@
 package main
 
+import "time"
+
 type AccountTable struct {
     Uuid string `json:"uuid"`
     AccountPhone string    `json:"account_phone"`
     DingdingAccount string `json:"dingding_account"`
     Password string     `json:"password"`
+    Position string    `json:"position"`
 }
 type StaffInterface struct{
     Id int
     StaffPhone string
-    StaffStatus string
+
 }
 type CompanyInterface struct {
     Id int
@@ -34,10 +37,9 @@ type EmploymentStatus struct {
     CompanyId string `json:"company_id"`
     DeptId string `json:"dept_id"`
     StaffId string `json:"staff_id"`
-    WorkAttendance string `json:"work_attem_dance"`
-    WorkPerformance string `json:"work_performance"`
+    WorkAttendance float64 `json:"work_attem_dance"`
     WorkSalary int `json:"work_salary"`
-    WorkInTime string `json:"work_in_time"`
+    WorkInTime time.Time `json:"work_in_time"`
     WorkPost string `json:"work_post"`
     CreaterName string `json:"creater_name"`
 }
