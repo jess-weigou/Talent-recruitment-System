@@ -4,7 +4,6 @@ import (
     "fmt"
     "github.com/gin-gonic/gin"
     "github.com/go-basic/uuid"
-    "reflect"
 )
 //登陆验证
 func (s *Service) Login (c *gin.Context)  {
@@ -55,9 +54,9 @@ func (s Service) Register( c *gin.Context)  {
             s.DatabaseCommit(&StaffInterface{
                 StaffPhone:register.AccountPhone,
             },c,"register fail_StaffInterface")
-            //s.DatabaseCommit(&SelfDetails{
-            //    StaffPhone2:register.AccountPhone,
-            //},c,"register fail_SelfDetails")
+            s.DatabaseCommit(&SelfDetails{
+               StaffPhone2:register.AccountPhone,
+            },c,"register fail_SelfDetails")
             uuid:=uuid.New()
             s.DB.Where("account_phone=?",register.AccountPhone).Updates(&AccountTable{
                 Uuid: uuid,
@@ -66,38 +65,72 @@ func (s Service) Register( c *gin.Context)  {
 }
 //修改个人信息
 func (s Service)ModifySelfDetail (c *gin.Context) {
-    selfInformation:=new(SelfDetails)
-    err := c.ShouldBind(selfInformation)
-    if err != nil {
-       MakeErrorReturn("can not bind")
-       return
-    }
-    var typeInfo = reflect.TypeOf(*selfInformation)
-    var valInfo = reflect.ValueOf(*selfInformation)
+   selfInformation:=new(SelfDetails)
     phone:=c.Param("phone")
-    num := typeInfo.NumField()
-    for i:=0;i<num;i++{
-        if valInfo.Field(i).String()+""!=""{
-            s.DB.Where("staff_phone2=?",phone).Updates(SelfDetails{
-                typeInfo.Field(i).Name:valInfo.Field(i).FieldByName(typeInfo.Field(i).Name),
-            })
+    s.DB.Where("staff_phone2=?",phone).Find(&selfInformation)
+    if selfInformation.StaffName!=""{
+        err := c.ShouldBind(selfInformation)
+        if err != nil {
+            MakeErrorReturn("can not bind")
+            return
         }
+        s.DB.Where("staff_phone2=?",phone).Updates(&selfInformation)
+    }else{
+        c.JSON(MakeErrorReturn("can not find this people"))
     }
 }
 //查看个人信息
 func (s Service)GetSelfDetail(c *gin.Context)  {
-    var Authorization string
     selfInformation := new(SelfDetails)
-    err:=c.ShouldBind(Authorization)
-    if err != nil {
-        MakeErrorReturn("can not bind json")
-        return
-    }
     phone:=c.Param("phone")
-    s.DB.Where("staff_phone2=?",phone).Find(selfInformation)
+    fmt.Println(phone)
+    s.DB.Debug().Where("staff_phone2=?",phone).Find(selfInformation)
+    fmt.Println(selfInformation)
     if selfInformation.StaffPhone2==""{
-        MakeErrorReturn("数据库错误")
+        c.JSON(MakeErrorReturn("can not find this people"))
         return
     }
-    MakeSuccessReturn(selfInformation)
+    c.JSON(MakeSuccessReturn(selfInformation))
+}
+//make the work file
+func (s Service)MakeWorkFile(c *gin.Context)  {
+    authorization:=c.Query("Authorization")
+    fmt.Println(authorization)
+    account:=new(AccountTable)
+    phone:=c.Param("phone")
+    fmt.Println(phone)
+    //acknowledge the user's Auth
+    s.DB.Select("position").Where("uuid=?",authorization).Find(&account)
+    if account.Position<"2"{
+       c.JSON(MakeErrorReturn("You don't have authority "))
+       return
+    }
+    workFile:=new(EmploymentStatus)
+    err:=c.ShouldBind(workFile)
+    if err != nil {
+        c.JSON(MakeErrorReturn("can not bind data"))
+        return
+    }
+    fmt.Println(workFile)
+    s.DatabaseCommit(&CompanyInterface{
+        CompanyId: workFile.CompanyId,
+    },c,"fail_CompanyId")
+    s.DatabaseCommit(&workFile,c,"can not insert_fail_CompanyId")
+    c.JSON(MakeSuccessReturn(""))
+}
+//view the work file
+func (s Service)ViewWorkFile(c *gin.Context) {
+    authorization:=c.Query("Authorization")
+    fmt.Println(authorization)
+    phone:=c.Param("phone")
+    fmt.Println(phone)
+    workFile:=new(EmploymentStatus)
+    s.DB.Where("staff_phone1=?",phone).Find(&workFile)
+    fmt.Println(workFile)
+    if workFile.CompanyId==""{
+        c.JSON(MakeErrorReturn("can not find this user"))
+        return
+    }else{
+        c.JSON(MakeSuccessReturn(workFile))
+    }
 }

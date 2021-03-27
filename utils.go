@@ -27,7 +27,7 @@ func MakeSuccessReturn(data interface{})(int ,interface{})  {
     }
 }
 func MakeErrorReturn(msg string)(int ,interface{})  {
-    return 200,ErrorReturn{
+    return 400,ErrorReturn{
         Status: false,
         Msg: msg,
         TokenData: Data{Token: ""},

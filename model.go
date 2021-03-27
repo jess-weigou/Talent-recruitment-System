@@ -12,7 +12,6 @@ type AccountTable struct {
 type StaffInterface struct{
     Id int
     StaffPhone string
-
 }
 type CompanyInterface struct {
     Id int

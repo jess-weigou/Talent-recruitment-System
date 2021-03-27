@@ -10,7 +10,12 @@ func (s Service)initRouter()  {
     selfInfo:=r.Group("/profiles/:phone")
     {
        selfInfo.GET("/",s.GetSelfDetail)
-       selfInfo.PUT("/",s.ModifySelfDetail)
+       //selfInfo.PUT("/",s.ModifySelfDetail)
+    }
+    work:=r.Group("/work/:phone")
+    {
+        work.POST("/",s.MakeWorkFile)
+        work.GET("/",s.ViewWorkFile)
     }
     s.Router=r
     r.Run(":8080")
