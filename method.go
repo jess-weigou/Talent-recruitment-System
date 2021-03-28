@@ -4,6 +4,7 @@ import (
     "fmt"
     "github.com/gin-gonic/gin"
     "github.com/go-basic/uuid"
+    "time"
 )
 //登陆验证
 func (s *Service) Login (c *gin.Context)  {
@@ -107,6 +108,7 @@ func (s Service)MakeWorkFile(c *gin.Context)  {
     }
     workFile:=new(EmploymentStatus)
     err:=c.ShouldBind(workFile)
+    workFile.WorkInTime=time.Now()
     if err != nil {
         c.JSON(MakeErrorReturn("can not bind data"))
         return

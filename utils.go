@@ -5,32 +5,29 @@ import (
     "github.com/gin-gonic/gin"
 )
 
-type Data struct {
-    Token interface{} `json:"token"`
-}
 type SuccessReturn struct {
     Status bool `json:"status"`
     Msg   string      `json:"msg"`
-    TokenData  Data   `json:"data"`
+    TokenData  interface{}   `json:"data"`
 }
 type ErrorReturn struct {
     Status bool    `json:"status"`
     Msg   string      `json:"msg"`
-    TokenData  Data   `json:"data"`
+    TokenData  interface{}   `json:"data"`
 }
 
 func MakeSuccessReturn(data interface{})(int ,interface{})  {
     return 200,SuccessReturn{
         Status: true,
         Msg: "success",
-        TokenData: Data{Token: data},
+        TokenData: data,
     }
 }
 func MakeErrorReturn(msg string)(int ,interface{})  {
     return 400,ErrorReturn{
         Status: false,
         Msg: msg,
-        TokenData: Data{Token: ""},
+        TokenData: "",
     }
 }
 func (s Service)DatabaseCommit(data interface{},c *gin.Context,msg string)  {

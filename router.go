@@ -10,7 +10,7 @@ func (s Service)initRouter()  {
     selfInfo:=r.Group("/profiles/:phone")
     {
        selfInfo.GET("/",s.GetSelfDetail)
-       //selfInfo.PUT("/",s.ModifySelfDetail)
+       selfInfo.PUT("/",s.ModifySelfDetail)
     }
     work:=r.Group("/work/:phone")
     {

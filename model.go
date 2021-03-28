@@ -29,6 +29,8 @@ type SelfDetails struct {
     StaffCharacter string `json:"staff_character"`
     StaffExperience string `json:"staff_experience"`
     StaffSchool string `json:"staff_school"`
+    StaffEducation string `json:"staff_education"`
+    StaffMajor string `json:"staff_major"`
 }
 type EmploymentStatus struct {
     FileId int `json:"file_id"`
