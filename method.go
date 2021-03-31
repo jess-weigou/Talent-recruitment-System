@@ -58,16 +58,19 @@ func (s Service) Register( c *gin.Context)  {
             s.DatabaseCommit(&SelfDetails{
                StaffPhone2:register.AccountPhone,
             },c,"register fail_SelfDetails")
-            uuid:=uuid.New()
-            s.DB.Where("account_phone=?",register.AccountPhone).Updates(&AccountTable{
-                Uuid: uuid,
-            })
            c.JSON(MakeSuccessReturn(""))
 }
 //修改个人信息
 func (s Service)ModifySelfDetail (c *gin.Context) {
    selfInformation:=new(SelfDetails)
+    acc := new(AccountTable)
     phone:=c.Param("phone")
+    authorization:=c.Query("Authorization")
+    s.DB.Where("account_phone=?",phone).Find(&acc)
+    if acc.Uuid!=authorization{
+        c.JSON(MakeErrorReturn("error auth"))
+        return
+    }
     s.DB.Where("staff_phone2=?",phone).Find(&selfInformation)
     if selfInformation.StaffPhone2!=""{
         err := c.ShouldBind(selfInformation)
@@ -85,8 +88,15 @@ func (s Service)ModifySelfDetail (c *gin.Context) {
 //查看个人信息
 func (s Service)GetSelfDetail(c *gin.Context)  {
     selfInformation := new(SelfDetails)
+    acc := new(AccountTable)
     phone:=c.Param("phone")
-    fmt.Println(phone)
+    authorization:=c.Query("Authorization")
+    s.DB.Where("account_phone=?",phone).Find(&acc)
+    if acc.Uuid!=authorization{
+        c.JSON(MakeErrorReturn("error auth"))
+        return
+    }
+    fmt.Println("接受到的电话号码是：",phone)
     s.DB.Debug().Where("staff_phone2=?",phone).Find(selfInformation)
     fmt.Println(selfInformation)
     if selfInformation.StaffPhone2==""{
@@ -103,8 +113,11 @@ func (s Service)MakeWorkFile(c *gin.Context)  {
     phone:=c.Param("phone")
     fmt.Println(phone)
     //acknowledge the user's Auth
-    s.DB.Select("position").Where("uuid=?",authorization).Find(&account)
-    if account.Position<"2"{
+    s.DB.Where("uuid=?",authorization).Find(&account)
+    if account.Position==""{
+        c.JSON(MakeErrorReturn("can not find this people"))
+        return
+    }else if account.Position<"2"{
        c.JSON(MakeErrorReturn("You don't have authority "))
        return
     }
@@ -119,6 +132,7 @@ func (s Service)MakeWorkFile(c *gin.Context)  {
     s.DatabaseCommit(&CompanyInterface{
         CompanyId: workFile.CompanyId,
     },c,"fail_CompanyId")
+    workFile.StaffPhone1 = phone
     s.DatabaseCommit(&workFile,c,"can not insert_fail_CompanyId")
     c.JSON(MakeSuccessReturn(""))
 }
@@ -127,7 +141,7 @@ func (s Service)ViewWorkFile(c *gin.Context) {
     authorization:=c.Query("Authorization")
     fmt.Println(authorization)
     phone:=c.Param("phone")
-    fmt.Println(phone)
+    fmt.Println("接受到的手机号：",phone)
     workFile:=new(EmploymentStatus)
     s.DB.Where("staff_phone1=?",phone).Find(&workFile)
     fmt.Println(workFile)
@@ -140,11 +154,12 @@ func (s Service)ViewWorkFile(c *gin.Context) {
 }
 //promotion post (提升职位)
 func (s Service)PromotionPost(c *gin.Context)  {
-    var position string
+    acc :=new(AccountTable)
     authorization:=c.Query("Authorization")
     accountBoss:= new(AccountTable)
     accountStaff:=new(AccountTable)
-    err:=c.ShouldBind(position)
+    err:=c.ShouldBind(&acc)
+    fmt.Println("接受到的职位:",acc.Position)
     if err!=nil{
         c.JSON(MakeErrorReturn("can't bind error"))
         return
@@ -161,12 +176,11 @@ func (s Service)PromotionPost(c *gin.Context)  {
         c.JSON(MakeErrorReturn("can't find this staff"))
         return
     }
-
     if accountBoss.Position<="2"{
         c.JSON(MakeErrorReturn("you don't have authority"))
         return
     }else if accountBoss.Position<="4"{
-        accountBoss.Position = position
+        accountStaff.Position = acc.Position
         s.DB.Where("account_phone=?",phone).Updates(&accountStaff)
         c.JSON(MakeSuccessReturn(""))
     }
