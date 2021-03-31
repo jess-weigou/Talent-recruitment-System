@@ -62,20 +62,22 @@ func (s Service) Register( c *gin.Context)  {
             s.DB.Where("account_phone=?",register.AccountPhone).Updates(&AccountTable{
                 Uuid: uuid,
             })
-           c.JSON(MakeSuccessReturn(uuid))
+           c.JSON(MakeSuccessReturn(""))
 }
 //修改个人信息
 func (s Service)ModifySelfDetail (c *gin.Context) {
    selfInformation:=new(SelfDetails)
     phone:=c.Param("phone")
     s.DB.Where("staff_phone2=?",phone).Find(&selfInformation)
-    if selfInformation.StaffName!=""{
+    if selfInformation.StaffPhone2!=""{
         err := c.ShouldBind(selfInformation)
         if err != nil {
-            MakeErrorReturn("can not bind")
+            fmt.Println(err)
+            c.JSON(MakeErrorReturn("can not bind"))
             return
         }
         s.DB.Where("staff_phone2=?",phone).Updates(&selfInformation)
+        c.JSON(MakeSuccessReturn(""))
     }else{
         c.JSON(MakeErrorReturn("can not find this people"))
     }
@@ -134,5 +136,38 @@ func (s Service)ViewWorkFile(c *gin.Context) {
         return
     }else{
         c.JSON(MakeSuccessReturn(workFile))
+    }
+}
+//promotion post (提升职位)
+func (s Service)PromotionPost(c *gin.Context)  {
+    var position string
+    authorization:=c.Query("Authorization")
+    accountBoss:= new(AccountTable)
+    accountStaff:=new(AccountTable)
+    err:=c.ShouldBind(position)
+    if err!=nil{
+        c.JSON(MakeErrorReturn("can't bind error"))
+        return
+    }
+    //find boss and staff
+    phone := c.Param("phone")
+    s.DB.Where("uuid=?",authorization).Find(&accountBoss)
+    if accountBoss.AccountPhone==""{
+        c.JSON(MakeErrorReturn("can't find this head of department"))
+        return
+    }
+    s.DB.Where("account_phone=?",phone).Find(&accountStaff)
+    if accountStaff.AccountPhone==""{
+        c.JSON(MakeErrorReturn("can't find this staff"))
+        return
+    }
+
+    if accountBoss.Position<="2"{
+        c.JSON(MakeErrorReturn("you don't have authority"))
+        return
+    }else if accountBoss.Position<="4"{
+        accountBoss.Position = position
+        s.DB.Where("account_phone=?",phone).Updates(&accountStaff)
+        c.JSON(MakeSuccessReturn(""))
     }
 }
