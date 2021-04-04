@@ -37,9 +37,8 @@ func (s Service)DatabaseCommit(data interface{},c *gin.Context,msg string)  {
             fmt.Println(msg)
             tx.Rollback()
             c.JSON(MakeErrorReturn(msg))
-            return
         }
         tx.Commit()
-        
+
     }
 }

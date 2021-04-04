@@ -82,7 +82,10 @@ func (s Service)ModifySelfDetail (c *gin.Context) {
             c.JSON(MakeErrorReturn("can not bind"))
             return
         }
-        s.DB.Where("staff_phone2=?",phone).Updates(&selfInformation)
+        //s.DB.Debug().Where("staff_phone2=?",phone).Updates(&selfInformation)
+        s.DB.Debug().Where(&SelfDetails{
+                StaffPhone2: phone,
+            }).Updates(&selfInformation)
         c.JSON(MakeSuccessReturn(""))
     }else{
         c.JSON(MakeErrorReturn("can not find this people"))
@@ -94,9 +97,9 @@ func (s Service)GetSelfDetail(c *gin.Context)  {
     phone:=c.Param("phone")
     fmt.Println("接受到的电话号码是：",phone)
     s.DB.Where(&SelfDetails{
-        StaffPhone2: phone,
-    }).Find(selfInformation)
-    //s.DB.Debug().Where("staff_phone2=?",phone).Find(selfInformation)
+       StaffPhone2: phone,
+    }).Find(&selfInformation)
+    //s.DB.Debug().Where("staff_phone2=?",phone).Find(&selfInformation)
     fmt.Println(selfInformation)
     if selfInformation.StaffPhone2==""{
         c.JSON(MakeErrorReturn("can not find this people"))
@@ -131,9 +134,10 @@ func (s Service)MakeWorkFile(c *gin.Context)  {
         return
     }
     fmt.Println(workFile)
-    s.DatabaseCommit(&CompanyInterface{
-        CompanyId: workFile.CompanyId,
-    },c,"fail_CompanyId")
+    //实际使用时没有这个
+    //s.DatabaseCommit(&CompanyInterface{
+    //    CompanyId: workFile.CompanyId,
+    //},c,"fail_CompanyId")
     workFile.StaffPhone1 = phone
     s.DatabaseCommit(&workFile,c,"can not insert_fail_CompanyId")
     c.JSON(MakeSuccessReturn(""))
@@ -164,7 +168,7 @@ func (s Service)PromotionPost(c *gin.Context)  {
     err:=c.ShouldBind(&acc)
     fmt.Println("接受到的职位:",acc.Position)
     if err!=nil{
-       c.JSON(MakeErrorReturn("can't bind error"))
+       c.JSON(MakeErrorReturn("can't bind json"))
        return
     }
     authorization:=c.GetHeader("Authorization")
@@ -189,6 +193,7 @@ func (s Service)PromotionPost(c *gin.Context)  {
         c.JSON(MakeErrorReturn("can't find this staff"))
         return
     }
+    fmt.Println("部门主管信息",accountBoss)
     if accountBoss.Position<="2"{
         c.JSON(MakeErrorReturn("you don't have authority"))
         return
