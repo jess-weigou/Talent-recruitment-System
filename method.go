@@ -13,8 +13,11 @@ func (s *Service) Login (c *gin.Context)  {
     if err!=nil{
         c.JSON(MakeErrorReturn("can not bind json"))
     }
-    fmt.Println("账号密码； ",input.AccountPhone,input.Password)
-    s.DB.Debug().Select("position").Where("account_phone=? AND password=?",input.AccountPhone,input.Password).Find(&input)
+    //fmt.Println("账号密码； ",input.AccountPhone,input.Password)
+    s.DB.Where(&AccountTable{
+        AccountPhone: input.AccountPhone,
+        Password: input.Password,
+    }).Find(&input)
     if input.Position == ""{
         fmt.Println("账号或者密码错误")
         c.JSON(MakeErrorReturn("username or password wrong"))
@@ -22,7 +25,9 @@ func (s *Service) Login (c *gin.Context)  {
     }
     //get uuid and insert to mysql
     uuid:=uuid.New()
-    s.DB.Where("account_phone=?",input.AccountPhone).Updates(&AccountTable{
+    s.DB.Where(&AccountTable{
+        AccountPhone:input.AccountPhone,
+    }).Updates(&AccountTable{
         Uuid: uuid,
     })
     fmt.Println(uuid)
@@ -40,7 +45,9 @@ func (s Service) Register( c *gin.Context)  {
         c.JSON(MakeErrorReturn("invalid data"))
         return
     }
-    s.DB.Select("password").Where("account_phone=?",register.AccountPhone).Find(&register)
+    s.DB.Where(&AccountTable{
+            AccountPhone: register.AccountPhone,
+    }).Find(&register)
     if register.Position!=""{
         c.JSON(MakeErrorReturn("用户已注册"))
         return
@@ -63,15 +70,11 @@ func (s Service) Register( c *gin.Context)  {
 //修改个人信息
 func (s Service)ModifySelfDetail (c *gin.Context) {
    selfInformation:=new(SelfDetails)
-    acc := new(AccountTable)
     phone:=c.Param("phone")
-    authorization:=c.Query("Authorization")
-    s.DB.Where("account_phone=?",phone).Find(&acc)
-    if acc.Uuid!=authorization{
-        c.JSON(MakeErrorReturn("error auth"))
-        return
-    }
-    s.DB.Where("staff_phone2=?",phone).Find(&selfInformation)
+    s.DB.Where(&SelfDetails{
+        StaffPhone2: phone,
+    }).Find(&selfInformation)
+    //s.DB.Where("staff_phone2=?",phone).Find(&selfInformation)
     if selfInformation.StaffPhone2!=""{
         err := c.ShouldBind(selfInformation)
         if err != nil {
@@ -88,16 +91,12 @@ func (s Service)ModifySelfDetail (c *gin.Context) {
 //查看个人信息
 func (s Service)GetSelfDetail(c *gin.Context)  {
     selfInformation := new(SelfDetails)
-    acc := new(AccountTable)
     phone:=c.Param("phone")
-    authorization:=c.Query("Authorization")
-    s.DB.Where("account_phone=?",phone).Find(&acc)
-    if acc.Uuid!=authorization{
-        c.JSON(MakeErrorReturn("error auth"))
-        return
-    }
     fmt.Println("接受到的电话号码是：",phone)
-    s.DB.Debug().Where("staff_phone2=?",phone).Find(selfInformation)
+    s.DB.Where(&SelfDetails{
+        StaffPhone2: phone,
+    }).Find(selfInformation)
+    //s.DB.Debug().Where("staff_phone2=?",phone).Find(selfInformation)
     fmt.Println(selfInformation)
     if selfInformation.StaffPhone2==""{
         c.JSON(MakeErrorReturn("can not find this people"))
@@ -107,13 +106,16 @@ func (s Service)GetSelfDetail(c *gin.Context)  {
 }
 //make the work file
 func (s Service)MakeWorkFile(c *gin.Context)  {
-    authorization:=c.Query("Authorization")
+    authorization:=c.GetHeader("Authorization")
     fmt.Println(authorization)
     account:=new(AccountTable)
     phone:=c.Param("phone")
-    fmt.Println(phone)
+    fmt.Println("work_file",phone)
     //acknowledge the user's Auth
-    s.DB.Where("uuid=?",authorization).Find(&account)
+    s.DB.Where(AccountTable{
+        Uuid: authorization,
+    }).Find(&account)
+    //s.DB.Where("uuid=?",authorization).Find(&account)
     if account.Position==""{
         c.JSON(MakeErrorReturn("can not find this people"))
         return
@@ -138,13 +140,16 @@ func (s Service)MakeWorkFile(c *gin.Context)  {
 }
 //view the work file
 func (s Service)ViewWorkFile(c *gin.Context) {
-    authorization:=c.Query("Authorization")
+    authorization:=c.GetHeader("Authorization")
     fmt.Println(authorization)
     phone:=c.Param("phone")
     fmt.Println("接受到的手机号：",phone)
     workFile:=new(EmploymentStatus)
-    s.DB.Where("staff_phone1=?",phone).Find(&workFile)
-    fmt.Println(workFile)
+    s.DB.Where(EmploymentStatus{
+        StaffPhone1: phone,
+    }).Find(&workFile)
+    //s.DB.Where("staff_phone1=?",phone).Find(&workFile)
+    fmt.Println("workFile",workFile)
     if workFile.CompanyId==""{
         c.JSON(MakeErrorReturn("can not find this user"))
         return
@@ -154,24 +159,32 @@ func (s Service)ViewWorkFile(c *gin.Context) {
 }
 //promotion post (提升职位)
 func (s Service)PromotionPost(c *gin.Context)  {
+    //测试用
     acc :=new(AccountTable)
-    authorization:=c.Query("Authorization")
-    accountBoss:= new(AccountTable)
-    accountStaff:=new(AccountTable)
     err:=c.ShouldBind(&acc)
     fmt.Println("接受到的职位:",acc.Position)
     if err!=nil{
-        c.JSON(MakeErrorReturn("can't bind error"))
-        return
+       c.JSON(MakeErrorReturn("can't bind error"))
+       return
     }
+    authorization:=c.GetHeader("Authorization")
+    accountBoss:= new(AccountTable)
+    accountStaff:=new(AccountTable)
+
     //find boss and staff
     phone := c.Param("phone")
-    s.DB.Where("uuid=?",authorization).Find(&accountBoss)
+    s.DB.Where(&AccountTable{
+        Uuid: authorization,
+    }).Find(&accountBoss)
+    //s.DB.Where("uuid=?",authorization).Find(&accountBoss)
     if accountBoss.AccountPhone==""{
         c.JSON(MakeErrorReturn("can't find this head of department"))
         return
     }
-    s.DB.Where("account_phone=?",phone).Find(&accountStaff)
+    s.DB.Where(&AccountTable{
+        AccountPhone: phone,
+    }).Find(&accountStaff)
+    //s.DB.Where("account_phone=?",phone).Find(&accountStaff)
     if accountStaff.AccountPhone==""{
         c.JSON(MakeErrorReturn("can't find this staff"))
         return
@@ -181,7 +194,13 @@ func (s Service)PromotionPost(c *gin.Context)  {
         return
     }else if accountBoss.Position<="4"{
         accountStaff.Position = acc.Position
-        s.DB.Where("account_phone=?",phone).Updates(&accountStaff)
+        s.DB.Where(&AccountTable{
+            AccountPhone: phone,
+        }).Updates(&accountStaff)
+        //s.DB.Where("account_phone=?",phone).Updates(&accountStaff)
         c.JSON(MakeSuccessReturn(""))
+    }else{
+        c.JSON(MakeErrorReturn("unexpected error"))
+        return
     }
 }

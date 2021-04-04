@@ -2,4 +2,4 @@
 User = "root"
 Password = "123456"
 Addr = "tcp(127.0.0.1:3306)"
-DBname = "talent"
+DBname = "talent2"
