@@ -4,16 +4,19 @@ import (
     "fmt"
     "github.com/gin-gonic/gin"
     "github.com/go-basic/uuid"
+
     "time"
 )
 //登陆验证
 func (s *Service) Login (c *gin.Context)  {
     input := new(AccountTable)
     err:=c.ShouldBind(input)
+
     if err!=nil{
         c.JSON(MakeErrorReturn("can not bind json"))
     }
     //fmt.Println("账号密码； ",input.AccountPhone,input.Password)
+    input.Password = Md5Encryption(input.Password)
     s.DB.Where(&AccountTable{
         AccountPhone: input.AccountPhone,
         Password: input.Password,
@@ -37,7 +40,7 @@ func (s *Service) Login (c *gin.Context)  {
 func (s Service) Register( c *gin.Context)  {
     register:= new(AccountTable)
     err:=c.ShouldBind(register)
-    fmt.Println(*register)
+    fmt.Println("注册信息",*register)
     if err!=nil{
         c.JSON(MakeErrorReturn("can not bind json"))
     }
@@ -45,13 +48,17 @@ func (s Service) Register( c *gin.Context)  {
         c.JSON(MakeErrorReturn("invalid data"))
         return
     }
+
     s.DB.Where(&AccountTable{
             AccountPhone: register.AccountPhone,
     }).Find(&register)
     if register.Position!=""{
-        c.JSON(MakeErrorReturn("用户已注册"))
+        c.JSON(MakeErrorReturn("the user has been registered"))
         return
     }
+    //加密
+    register.Password = Md5Encryption(register.Password)
+
     //注册插入各表电话信息
             s.DatabaseCommit(&AccountTable {
                 AccountPhone: register.AccountPhone,
@@ -95,6 +102,7 @@ func (s Service)ModifySelfDetail (c *gin.Context) {
 func (s Service)GetSelfDetail(c *gin.Context)  {
     selfInformation := new(SelfDetails)
     phone:=c.Param("phone")
+    //phone = s.Encryption(phone)
     fmt.Println("接受到的电话号码是：",phone)
     s.DB.Where(&SelfDetails{
        StaffPhone2: phone,
@@ -105,6 +113,7 @@ func (s Service)GetSelfDetail(c *gin.Context)  {
         c.JSON(MakeErrorReturn("can not find this people"))
         return
     }
+    //phone = s.Decryption(phone)
     c.JSON(MakeSuccessReturn(selfInformation))
 }
 //make the work file
@@ -147,6 +156,7 @@ func (s Service)ViewWorkFile(c *gin.Context) {
     authorization:=c.GetHeader("Authorization")
     fmt.Println(authorization)
     phone:=c.Param("phone")
+
     fmt.Println("接受到的手机号：",phone)
     workFile:=new(EmploymentStatus)
     s.DB.Where(EmploymentStatus{
@@ -158,6 +168,7 @@ func (s Service)ViewWorkFile(c *gin.Context) {
         c.JSON(MakeErrorReturn("can not find this user"))
         return
     }else{
+
         c.JSON(MakeSuccessReturn(workFile))
     }
 }
@@ -177,6 +188,7 @@ func (s Service)PromotionPost(c *gin.Context)  {
 
     //find boss and staff
     phone := c.Param("phone")
+
     s.DB.Where(&AccountTable{
         Uuid: authorization,
     }).Find(&accountBoss)

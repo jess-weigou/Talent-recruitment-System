@@ -10,7 +10,7 @@ func cors() gin.HandlerFunc {
         method := c.Request.Method
         c.Header("Access-Control-Allow-Origin", "*")
         c.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token")
-        c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+        c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS,PUT ")
         c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
         c.Header("Access-Control-Allow-Credentials", "true")
         if method == "OPTIONS" {
@@ -27,14 +27,14 @@ func (s Service)initRouter()  {
     r.POST("/register",s.Register)
     selfInfo:=r.Group("/profiles/:phone")
     {
-       selfInfo.GET("/",s.GetSelfDetail)
-       selfInfo.PUT("/",s.ModifySelfDetail)
+       selfInfo.GET("",s.GetSelfDetail)
+       selfInfo.PUT("",s.ModifySelfDetail)
     }
     work:=r.Group("/work/:phone")
     {
-        work.POST("/",s.MakeWorkFile)
-        work.GET("/",s.ViewWorkFile)
-        work.PUT("/",s.PromotionPost)
+        work.POST("",s.MakeWorkFile)
+        work.GET("",s.ViewWorkFile)
+        work.PUT("",s.PromotionPost)
     }
 
     s.Router=r

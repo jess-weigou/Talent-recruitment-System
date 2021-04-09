@@ -1,6 +1,7 @@
 package main
 
 import (
+    "crypto/md5"
     "fmt"
     "github.com/gin-gonic/gin"
 )
@@ -41,4 +42,8 @@ func (s Service)DatabaseCommit(data interface{},c *gin.Context,msg string)  {
         tx.Commit()
 
     }
+}
+func Md5Encryption(data string)string  {
+    dataSecret := fmt.Sprintf("%x",md5.Sum([]byte(data)))
+    return  dataSecret
 }
