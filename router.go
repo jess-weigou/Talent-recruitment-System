@@ -36,6 +36,7 @@ func (s Service)initRouter()  {
         work.GET("",s.ViewWorkFile)
         work.PUT("",s.PromotionPost)
     }
+    r.DELETE("/:phone",s.ClearPhone)
 
     s.Router=r
     r.Run(":8080")

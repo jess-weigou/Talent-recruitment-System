@@ -4,18 +4,15 @@ import (
     "fmt"
     "github.com/gin-gonic/gin"
     "github.com/go-basic/uuid"
-
     "time"
 )
-//登陆验证
+//login
 func (s *Service) Login (c *gin.Context)  {
     input := new(AccountTable)
     err:=c.ShouldBind(input)
-
     if err!=nil{
         c.JSON(MakeErrorReturn("can not bind json"))
     }
-    //fmt.Println("账号密码； ",input.AccountPhone,input.Password)
     input.Password = Md5Encryption(input.Password)
     s.DB.Where(&AccountTable{
         AccountPhone: input.AccountPhone,
@@ -36,7 +33,7 @@ func (s *Service) Login (c *gin.Context)  {
     fmt.Println(uuid)
     c.JSON(MakeSuccessReturn(uuid))
 }
-//注册
+//register
 func (s Service) Register( c *gin.Context)  {
     register:= new(AccountTable)
     err:=c.ShouldBind(register)
@@ -59,7 +56,7 @@ func (s Service) Register( c *gin.Context)  {
     //加密
     register.Password = Md5Encryption(register.Password)
 
-    //注册插入各表电话信息
+    //insert to table of AccountTable、StaffInterface、SelfDetails
             s.DatabaseCommit(&AccountTable {
                 AccountPhone: register.AccountPhone,
                 Password: register.Password,
@@ -74,7 +71,7 @@ func (s Service) Register( c *gin.Context)  {
             },c,"register fail_SelfDetails")
            c.JSON(MakeSuccessReturn(""))
 }
-//修改个人信息
+//modify selfDetails
 func (s Service)ModifySelfDetail (c *gin.Context) {
    selfInformation:=new(SelfDetails)
     phone:=c.Param("phone")
@@ -98,7 +95,7 @@ func (s Service)ModifySelfDetail (c *gin.Context) {
         c.JSON(MakeErrorReturn("can not find this people"))
     }
 }
-//查看个人信息
+//view selfDetails
 func (s Service)GetSelfDetail(c *gin.Context)  {
     selfInformation := new(SelfDetails)
     phone:=c.Param("phone")
@@ -129,9 +126,11 @@ func (s Service)MakeWorkFile(c *gin.Context)  {
     }).Find(&account)
     //s.DB.Where("uuid=?",authorization).Find(&account)
     if account.Position==""{
+        fmt.Println("can not find this people")
         c.JSON(MakeErrorReturn("can not find this people"))
         return
     }else if account.Position<"2"{
+        fmt.Println("You don't have authority ")
        c.JSON(MakeErrorReturn("You don't have authority "))
        return
     }
@@ -139,6 +138,7 @@ func (s Service)MakeWorkFile(c *gin.Context)  {
     err:=c.ShouldBind(workFile)
     workFile.WorkInTime=time.Now()
     if err != nil {
+        fmt.Println("can not bind data")
         c.JSON(MakeErrorReturn("can not bind data"))
         return
     }
@@ -156,7 +156,6 @@ func (s Service)ViewWorkFile(c *gin.Context) {
     authorization:=c.GetHeader("Authorization")
     fmt.Println(authorization)
     phone:=c.Param("phone")
-
     fmt.Println("接受到的手机号：",phone)
     workFile:=new(EmploymentStatus)
     s.DB.Where(EmploymentStatus{
@@ -165,10 +164,10 @@ func (s Service)ViewWorkFile(c *gin.Context) {
     //s.DB.Where("staff_phone1=?",phone).Find(&workFile)
     fmt.Println("workFile",workFile)
     if workFile.CompanyId==""{
+        fmt.Println("can not find this user")
         c.JSON(MakeErrorReturn("can not find this user"))
         return
     }else{
-
         c.JSON(MakeSuccessReturn(workFile))
     }
 }
@@ -220,4 +219,25 @@ func (s Service)PromotionPost(c *gin.Context)  {
         c.JSON(MakeErrorReturn("unexpected error"))
         return
     }
+}
+func (s Service)ClearPhone(c *gin.Context)  {
+    phone := c.Param("phone")
+    staffInterface := new(StaffInterface)
+    accountTable := new(AccountTable)
+    selfDetails :=new(SelfDetails)
+    employmentStatus :=new(EmploymentStatus)
+    s.DB.Where(&EmploymentStatus{
+        StaffPhone1: phone,
+    }).Delete(&employmentStatus)
+    s.DB.Where(&StaffInterface{
+        StaffPhone: phone,
+    }).Delete(&staffInterface)
+
+    s.DB.Where(&AccountTable{
+        AccountPhone: phone,
+    }).Delete(&accountTable)
+    s.DB.Where(&SelfDetails{
+        StaffPhone2: phone,
+    }).Delete(&selfDetails)
+    c.JSON(MakeSuccessReturn(""))
 }

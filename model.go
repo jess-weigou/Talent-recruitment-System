@@ -23,8 +23,8 @@ type SelfDetails struct {
     StaffName string   `json:"staff_name"`
     StaffIdentityCard string `json:"staff_identity_card"`
     StaffPhoto string `json:"staff_photo"`
-    StaffSexuality bool `json:"staff_sex"`
-    StaffMarry bool `json:"staff_marry"`
+    StaffSexuality string `json:"staff_sex"`
+    StaffMarry string `json:"staff_marry"`
     StaffCertification string `json:"staff_certification"`
     StaffCharacter string `json:"staff_character"`
     StaffExperience string `json:"staff_experience"`
@@ -37,6 +37,7 @@ type EmploymentStatus struct {
     StaffPhone1 string `json:"staff_phone"`
     CompanyId string `json:"company_id"`
     DeptId string `json:"dept_id"`
+    DeptName string `dept_name`
     StaffId string `json:"staff_id"`
     WorkAttendance float64 `json:"work_attem_dance"`
     WorkSalary int `json:"work_salary"`
